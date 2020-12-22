@@ -110,6 +110,30 @@ class LineByLineTextDataset(Dataset):
         return torch.tensor(self.examples[i], dtype=torch.long)
 
 
+class MemmapDataset(Dataset):
+    def __init__(self, tokenizer: PreTrainedTokenizer, args, file_path: str, block_size=512):
+        assert os.path.isfile(file_path)
+        logger.info("Opening memmap dataset at %s", file_path)
+
+        match = re.search(r'\D*(\d+)_(\d+)\D*', file_path)
+        assert match is not None
+        self.data_size, self.block_size = [int(item) for item in match.groups()]
+        assert self.block_size == block_size
+
+        self.data = np.memmap(
+            filename=file_path,
+            shape=(self.data_size, self.block_size),
+            dtype=np.uint8,
+            mode='r',
+        )
+
+    def __len__(self):
+        return self.data_size
+
+    def __getitem__(self, i):
+        return torch.tensor(self.data[i], dtype=torch.long)
+
+
 def load_and_cache_examples(args, tokenizer, evaluate=False):
     file_path = args.eval_data_file if evaluate else args.train_data_file
     if args.line_by_line:
