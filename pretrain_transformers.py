@@ -117,21 +117,23 @@ class MemmapDataset(Dataset):
 
         match = re.search(r'\D*(\d+)_(\d+)\D*', file_path)
         assert match is not None
-        self.data_size, self.block_size = [int(item) for item in match.groups()]
-        assert self.block_size == block_size
+
+        self.block_size = block_size
+        self.n_samples, original_block_size = [int(item) for item in match.groups()]
+        assert original_block_size >= self.block_size
 
         self.data = np.memmap(
             filename=file_path,
-            shape=(self.data_size, self.block_size),
+            shape=(self.n_samples, original_block_size),
             dtype=np.uint8,
             mode='r',
         )
 
     def __len__(self):
-        return self.data_size
+        return self.n_samples
 
     def __getitem__(self, i):
-        return torch.tensor(self.data[i], dtype=torch.long)
+        return torch.tensor(self.data[i, :self.block_size], dtype=torch.long)
 
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
