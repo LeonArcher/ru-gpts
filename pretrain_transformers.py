@@ -139,7 +139,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False):
     if args.line_by_line:
         return LineByLineTextDataset(tokenizer, args, file_path=file_path, block_size=args.block_size)
     else:
-        return TextDataset(tokenizer, args, file_path=file_path, block_size=args.block_size)
+        return MemmapDataset(tokenizer, args, file_path=file_path, block_size=args.block_size)
 
 
 def set_seed(args):
